@@ -1,0 +1,23 @@
+{% extends "base.html" %}{% load humanize %}
+{% block title %}My account — {{ shop.shop_name }}{% endblock %}
+{% block content %}
+<div class="spread" style="margin:24px 0 16px">
+  <div><h1 style="margin:0">Hi {{ user.first_name|default:user.username }}</h1><span class="muted">{{ user.email }}</span></div>
+  <div class="row">
+    {% if user.is_staff %}<a class="btn" href="{% url 'dash_home' %}">Owner dashboard</a>{% endif %}
+    <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn ghost">{% include "_icon.html" with name="out" %} Sign out</button></form>
+  </div>
+</div>
+<div class="panel table-wrap">
+  <h2>My orders</h2>
+  {% if orders %}
+  <table>
+    <thead><tr><th>Order</th><th>Date</th><th>Total</th><th>Status</th><th></th></tr></thead>
+    <tbody>{% for o in orders %}
+      <tr><td><b>{{ o.number }}</b></td><td class="small">{{ o.created|date:"j M Y" }}</td><td>KES {{ o.total|intcomma }}</td>
+          <td><span class="status {{ o.status }}">{{ o.get_status_display }}</span></td><td><a href="{{ o.get_absolute_url }}">View →</a></td></tr>
+    {% endfor %}</tbody>
+  </table>
+  {% else %}<p class="muted">No orders yet. <a href="{% url 'shop' %}">Start shopping</a>.</p>{% endif %}
+</div>
+{% endblock %}

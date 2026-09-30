@@ -1,0 +1,35 @@
+{% extends "dashboard/base.html" %}
+{% block dtitle %}Shop settings{% endblock %}
+{% block content %}
+<div class="top"><h1>Shop settings</h1></div>
+<div class="two-col">
+  <form method="post" class="panel">{% csrf_token %}
+    <h2>Shop details</h2>
+    {% include "_field.html" with field=form.shop_name %}
+    {% include "_field.html" with field=form.tagline %}
+    {% include "_field.html" with field=form.location %}
+    <div class="grid-2">
+      {% include "_field.html" with field=form.phone %}
+      {% include "_field.html" with field=form.whatsapp_number %}
+    </div>
+    {% include "_field.html" with field=form.email %}
+    <h2>Delivery & stock</h2>
+    <div class="grid-2">
+      {% include "_field.html" with field=form.delivery_fee %}
+      {% include "_field.html" with field=form.free_delivery_over %}
+    </div>
+    {% include "_field.html" with field=form.low_stock_default %}
+    <button class="btn lg">Save settings</button>
+  </form>
+  <div class="panel">
+    <h2>M-Pesa</h2>
+    {% if mpesa_ready %}
+      <p><span class="status completed">Connected</span></p>
+      <p class="small muted">Customers get a payment prompt at checkout. Paid orders switch to “Paid” automatically.</p>
+    {% else %}
+      <p><span class="status pending">Demo mode</span></p>
+      <p class="small">M-Pesa keys aren't set yet, so the site shows a “Simulate payment” button instead of sending real prompts. Your developer adds the Daraja keys on the hosting server (see README).</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

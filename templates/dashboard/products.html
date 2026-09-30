@@ -1,0 +1,45 @@
+{% extends "dashboard/base.html" %}{% load humanize static %}
+{% block dtitle %}Products{% endblock %}
+{% block content %}
+<div class="top">
+  <h1>Products</h1>
+  <div class="row">
+    <form method="get" class="search" style="min-width:240px"><input type="search" name="q" value="{{ q }}" placeholder="Search products"><button aria-label="Search">{% include "_icon.html" with name="search" %}</button></form>
+    <a class="btn" href="{% url 'dash_product_new' %}">{% include "_icon.html" with name="plus" %} Add product</a>
+  </div>
+</div>
+<div class="tabs">
+  <a href="{% url 'dash_products' %}" class="{% if not filter %}on{% endif %}">All</a>
+  <a href="?filter=low" class="{% if filter == 'low' %}on{% endif %}">Low / out of stock{% if low_stock_count %} ({{ low_stock_count }}){% endif %}</a>
+  <a href="?filter=offers" class="{% if filter == 'offers' %}on{% endif %}">On offer</a>
+  <a href="?filter=hidden" class="{% if filter == 'hidden' %}on{% endif %}">Hidden</a>
+</div>
+<div class="panel table-wrap" style="padding:8px 14px">
+  {% if products %}
+  <table>
+    <thead><tr><th colspan="2">Product</th><th>Price</th><th>Stock</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for p in products %}
+      <tr class="{% if p.stock <= p.alert_level %}low-row{% endif %}">
+        <td style="width:64px"><img class="thumb" src="{{ p.photo|default:'/static/placeholder.svg' }}" alt="" onerror="this.onerror=null;this.src='{% static 'placeholder.svg' %}'"></td>
+        <td><a href="{% url 'dash_product_edit' p.pk %}"><b>{{ p.name }}</b></a><div class="small muted">{{ p.category|default:"No category" }}{% if p.brand %} · {{ p.brand }}{% endif %}</div></td>
+        <td>KES {{ p.price|intcomma }}{% if p.on_offer %}<div class="small muted" style="text-decoration:line-through">{{ p.old_price|intcomma }}</div>{% endif %}</td>
+        <td>
+          <form method="post" action="{% url 'dash_product_stock' p.pk %}" class="inline-stock">{% csrf_token %}
+            <input type="number" name="stock" value="{{ p.stock }}" min="0" aria-label="Stock for {{ p.name }}"><button class="btn sm light">Save</button>
+          </form>
+          {% if p.stock == 0 %}<div class="small" style="color:var(--bad)">Out of stock</div>{% elif p.stock <= p.alert_level %}<div class="small" style="color:var(--warn)">Low stock</div>{% endif %}
+        </td>
+        <td>{% if p.is_active %}<span class="status completed">Live</span>{% else %}<span class="status cancelled">Hidden</span>{% endif %}
+            {% if p.is_featured %}<span class="status paid">Featured</span>{% endif %}</td>
+        <td style="white-space:nowrap"><a class="btn sm ghost" href="{% url 'dash_product_edit' p.pk %}">Edit</a> <a class="btn sm ghost" href="{{ p.get_absolute_url }}" target="_blank">View</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <div class="big-state"><div class="ic">{% include "_icon.html" with name="box" %}</div><h2>No products here</h2>
+      <a class="btn" href="{% url 'dash_product_new' %}">Add a product</a></div>
+  {% endif %}
+</div>
+{% endblock %}

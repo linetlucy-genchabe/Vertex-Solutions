@@ -1,0 +1,48 @@
+{% extends "dashboard/base.html" %}{% load humanize static %}
+{% block dtitle %}Overview{% endblock %}
+{% block content %}
+<div class="top">
+  <div><h1>Good {% now "A" as ampm %}{% if ampm == "AM" %}morning{% else %}day{% endif %}, {{ user.first_name|default:"there" }}</h1>
+    <span class="muted">{% now "l j F Y" %} · {{ product_count }} products in the shop</span></div>
+  <a class="btn lg" href="{% url 'dash_product_new' %}">{% include "_icon.html" with name="plus" %} Add product</a>
+</div>
+
+<div class="stats">
+  <div class="stat"><span>Sales today</span><b>KES {{ sales_today|intcomma }}</b></div>
+  <div class="stat"><span>Sales this month</span><b>KES {{ sales_month|intcomma }}</b></div>
+  <a class="stat {% if to_process %}alert{% endif %}" href="{% url 'dash_orders' %}?status=paid" style="text-decoration:none;color:inherit"><span>Paid — to process</span><b>{{ to_process }}</b></a>
+  <a class="stat" href="{% url 'dash_orders' %}?status=pending" style="text-decoration:none;color:inherit"><span>Awaiting payment</span><b>{{ awaiting }}</b></a>
+</div>
+
+<div class="two-col">
+  <div class="panel table-wrap">
+    <div class="spread"><h2 style="margin:0">Recent orders</h2><a href="{% url 'dash_orders' %}">All orders →</a></div>
+    {% if recent %}
+    <table>
+      <thead><tr><th>Order</th><th>Customer</th><th>Total</th><th>Status</th></tr></thead>
+      <tbody>{% for o in recent %}
+        <tr><td><a href="{% url 'dash_order' o.number %}"><b>{{ o.number }}</b></a><div class="small muted">{{ o.created|naturaltime }}</div></td>
+            <td>{{ o.full_name }}<div class="small muted">{{ o.get_payment_method_display }}</div></td>
+            <td>KES {{ o.total|intcomma }}</td><td><span class="status {{ o.status }}">{{ o.get_status_display }}</span></td></tr>
+      {% endfor %}</tbody>
+    </table>
+    {% else %}<p class="muted">No orders yet. They'll appear here as customers buy.</p>{% endif %}
+  </div>
+
+  <div class="panel">
+    <div class="spread"><h2 style="margin:0">{% include "_icon.html" with name="alert" %} Low stock</h2><a href="{% url 'dash_products' %}?filter=low">See all →</a></div>
+    {% if low_stock %}
+      <p class="small muted">These are at or below their alert level. Restock and update the number.</p>
+      {% for p in low_stock %}
+      <div class="low-item">
+        <div style="min-width:0"><a href="{% url 'dash_product_edit' p.pk %}"><b>{{ p.name|truncatechars:34 }}</b></a>
+          <div class="small">{% if p.stock == 0 %}<span style="color:var(--bad)">Out of stock</span>{% else %}<span style="color:var(--warn)">{{ p.stock }} left</span>{% endif %}</div></div>
+        <form method="post" action="{% url 'dash_product_stock' p.pk %}" class="inline-stock">{% csrf_token %}
+          <input type="number" name="add" placeholder="+qty" min="1" aria-label="Add stock"><button class="btn sm">Add</button>
+        </form>
+      </div>
+      {% endfor %}
+    {% else %}<p class="muted">{% include "_icon.html" with name="check" %} All products are well stocked.</p>{% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — {{ shop.shop_name }}{% endblock %}
+{% block content %}
+<div class="crumbs"><a href="{% url 'home' %}">Home</a> / {{ title }}</div>
+<div class="spread" style="margin-bottom:16px">
+  <div><h1 style="margin:0">{{ title }}</h1><span class="muted">{{ products|length }} product{{ products|length|pluralize }}</span></div>
+  <form method="get" class="row">
+    {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+    {% if request.GET.offers %}<input type="hidden" name="offers" value="1">{% endif %}
+    <label class="row small" style="gap:6px"><input type="checkbox" name="instock" value="1" {% if request.GET.instock %}checked{% endif %} onchange="this.form.submit()"> In stock only</label>
+    <select name="sort" onchange="this.form.submit()" style="padding:8px 10px;border:1.5px solid var(--line);border-radius:10px;font:inherit">
+      <option value="new" {% if sort == "new" %}selected{% endif %}>Newest</option>
+      <option value="low" {% if sort == "low" %}selected{% endif %}>Price: low to high</option>
+      <option value="high" {% if sort == "high" %}selected{% endif %}>Price: high to low</option>
+    </select>
+  </form>
+</div>
+{% if products %}
+  <div class="grid">{% for p in products %}{% include "shop/_card.html" %}{% endfor %}</div>
+{% else %}
+  <div class="panel big-state">
+    <div class="ic">{% include "_icon.html" with name="search" %}</div>
+    <h2>Nothing found</h2>
+    <p class="muted">Try another search, or ask us on WhatsApp — we may have it in the shop.</p>
+    <a class="btn wa" href="{{ wa_link }}" target="_blank" rel="noopener">{% include "_icon.html" with name="wa" %} Ask on WhatsApp</a>
+  </div>
+{% endif %}
+{% endblock %}

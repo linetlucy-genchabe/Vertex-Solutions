@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{% block dtitle %}Dashboard{% endblock %} · {{ shop.shop_name }} owner{% endblock %}
+{% block page %}
+{% with u=request.resolver_match.url_name %}
+<nav class="dash-mobile-nav">
+  <a href="{% url 'dash_home' %}" class="{% if u == 'dash_home' %}on{% endif %}">Overview</a>
+  <a href="{% url 'dash_orders' %}" class="{% if 'order' in u %}on{% endif %}">Orders{% if new_orders_count %} ({{ new_orders_count }}){% endif %}</a>
+  <a href="{% url 'dash_products' %}" class="{% if 'product' in u %}on{% endif %}">Products</a>
+  <a href="{% url 'dash_product_new' %}">+ Add</a>
+  <a href="{% url 'dash_categories' %}" class="{% if 'categor' in u %}on{% endif %}">Categories</a>
+  <a href="{% url 'dash_settings' %}" class="{% if u == 'dash_settings' %}on{% endif %}">Settings</a>
+  <a href="{% url 'home' %}">View shop</a>
+</nav>
+<div class="dash">
+  <aside>
+    <a class="logo" href="{% url 'dash_home' %}"><span class="mark">V</span><span>{{ shop.shop_name }}<small style="color:#8fa6cc">Owner dashboard</small></span></a>
+    <a class="nav {% if u == 'dash_home' %}on{% endif %}" href="{% url 'dash_home' %}">{% include "_icon.html" with name="home" %} Overview</a>
+    <a class="nav {% if 'order' in u %}on{% endif %}" href="{% url 'dash_orders' %}">{% include "_icon.html" with name="list" %} Orders {% if new_orders_count %}<span class="pill blue">{{ new_orders_count }}</span>{% endif %}</a>
+    <a class="nav {% if 'product' in u and u != 'dash_product_new' %}on{% endif %}" href="{% url 'dash_products' %}">{% include "_icon.html" with name="box" %} Products {% if low_stock_count %}<span class="pill" title="Low or out of stock">{{ low_stock_count }}</span>{% endif %}</a>
+    <a class="nav {% if u == 'dash_product_new' %}on{% endif %}" href="{% url 'dash_product_new' %}">{% include "_icon.html" with name="plus" %} Add product</a>
+    <a class="nav {% if 'categor' in u %}on{% endif %}" href="{% url 'dash_categories' %}">{% include "_icon.html" with name="grid" %} Categories</a>
+    <a class="nav {% if u == 'dash_settings' %}on{% endif %}" href="{% url 'dash_settings' %}">{% include "_icon.html" with name="gear" %} Shop settings</a>
+    <hr style="border:0;border-top:1px solid rgba(255,255,255,.12);margin:14px 0">
+    <a class="nav" href="{% url 'home' %}" target="_blank">{% include "_icon.html" with name="store" %} View shop ↗</a>
+    <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="nav" style="all:unset;cursor:pointer;display:flex;gap:10px;align-items:center;padding:10px 12px;color:#c9d8f2">{% include "_icon.html" with name="out" %} Sign out</button></form>
+  </aside>
+  <main>
+    {% if messages %}{% for m in messages %}<div class="msg {{ m.tags }}">{{ m }}</div>{% endfor %}{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+{% endwith %}
+{% endblock %}

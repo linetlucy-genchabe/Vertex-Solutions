@@ -1,0 +1,63 @@
+{% extends "dashboard/base.html" %}{% load static %}
+{% block dtitle %}{% if product %}Edit product{% else %}Add product{% endif %}{% endblock %}
+{% block content %}
+<div class="top">
+  <h1>{% if product %}Edit “{{ product.name }}”{% else %}Add a product{% endif %}</h1>
+  <a class="btn ghost" href="{% url 'dash_products' %}">← Back to products</a>
+</div>
+<form method="post" enctype="multipart/form-data" class="two-col">{% csrf_token %}
+  <div class="panel">
+    {% for e in form.non_field_errors %}<div class="msg error">{{ e }}</div>{% endfor %}
+    {% include "_field.html" with field=form.name %}
+    <div class="grid-2">
+      {% include "_field.html" with field=form.category %}
+      {% include "_field.html" with field=form.brand %}
+    </div>
+    {% include "_field.html" with field=form.short_specs %}
+    {% include "_field.html" with field=form.description %}
+    <h2>Price & stock</h2>
+    <div class="grid-2">
+      {% include "_field.html" with field=form.price %}
+      {% include "_field.html" with field=form.old_price %}
+      {% include "_field.html" with field=form.stock %}
+      {% include "_field.html" with field=form.low_stock_alert %}
+    </div>
+  </div>
+  <div>
+    <div class="panel">
+      <h2>Photo</h2>
+      <div style="aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:var(--ice);margin-bottom:12px">
+        <img id="preview" src="{{ product.photo|default:'/static/placeholder.svg' }}" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.onerror=null;this.src='{% static 'placeholder.svg' %}'">
+      </div>
+      {% include "_field.html" with field=form.image %}
+      {% include "_field.html" with field=form.image_url %}
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <h2>Visibility</h2>
+      {% include "_field.html" with field=form.is_active %}
+      {% include "_field.html" with field=form.is_featured %}
+      <button class="btn block lg">Save product</button>
+      {% if not product %}<button class="btn block light" style="margin-top:8px" name="add_another" value="1">Save & add another</button>{% endif %}
+    </div>
+    {% if product %}
+    <div class="panel" style="margin-top:16px">
+      <p class="small muted" style="margin-top:0">To stop selling it for now, untick “Show in shop”. Delete removes it permanently (past orders keep the name).</p>
+      <button class="btn danger block" form="delForm">Delete product</button>
+    </div>
+    {% endif %}
+  </div>
+</form>
+{% if product %}
+<form id="delForm" method="post" action="{% url 'dash_product_delete' product.pk %}" onsubmit="return confirm('Delete {{ product.name|escapejs }} permanently?')">{% csrf_token %}</form>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+  var img = document.getElementById('preview');
+  var file = document.getElementById('id_image'), url = document.getElementById('id_image_url');
+  if (file) file.addEventListener('change', function(){ if (file.files[0]) img.src = URL.createObjectURL(file.files[0]); });
+  if (url) url.addEventListener('input', function(){ if (url.value.startsWith('http')) img.src = url.value; });
+})();
+</script>
+{% endblock %}

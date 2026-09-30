@@ -1,0 +1,31 @@
+{% extends "dashboard/base.html" %}{% load humanize %}
+{% block dtitle %}Orders{% endblock %}
+{% block content %}
+<div class="top">
+  <h1>Orders</h1>
+  <form method="get" class="search" style="min-width:260px">
+    {% if status %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
+    <input type="search" name="q" value="{{ q }}" placeholder="Order no, name or phone"><button aria-label="Search">{% include "_icon.html" with name="search" %}</button>
+  </form>
+</div>
+<div class="tabs">
+  {% for key, label, n in tabs %}<a href="?status={{ key }}" class="{% if status == key %}on{% endif %}">{{ label }} ({{ n }})</a>{% endfor %}
+</div>
+<div class="panel table-wrap" style="padding:8px 14px">
+  {% if orders %}
+  <table>
+    <thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Pay / collect</th><th>Status</th></tr></thead>
+    <tbody>{% for o in orders %}
+      <tr>
+        <td><a href="{% url 'dash_order' o.number %}"><b>{{ o.number }}</b></a><div class="small muted">{{ o.created|date:"j M, g:i a" }}</div></td>
+        <td>{{ o.full_name }}<div class="small muted">{{ o.phone }}</div></td>
+        <td>{{ o.n|default:0 }}</td>
+        <td><b>KES {{ o.total|intcomma }}</b></td>
+        <td class="small">{{ o.get_payment_method_display }}<br><span class="muted">{{ o.get_delivery_method_display }}</span></td>
+        <td><span class="status {{ o.status }}">{{ o.get_status_display }}</span></td>
+      </tr>
+    {% endfor %}</tbody>
+  </table>
+  {% else %}<p class="muted" style="padding:10px 0">No orders{% if status or q %} match this filter{% endif %}.</p>{% endif %}
+</div>
+{% endblock %}

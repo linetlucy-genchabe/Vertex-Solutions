@@ -1,0 +1,105 @@
+{% extends "base.html" %}{% load humanize %}
+{% block title %}Order {{ order.number }} — {{ shop.shop_name }}{% endblock %}
+{% block content %}
+<div class="crumbs"><a href="{% url 'home' %}">Home</a> / Order {{ order.number }}</div>
+<div class="two-col" style="margin-top:8px">
+  <div class="panel">
+    <div id="state">
+    {% if order.status == "pending" and order.payment_method == "mpesa" %}
+      {% if order.checkout_request_id %}
+        <div class="big-state" id="waiting">
+          <div class="spinner" style="margin:0 auto 14px"></div>
+          <h2>Check your phone</h2>
+          <p class="muted">We sent an M-Pesa prompt to <b>{{ order.phone }}</b> for <b>KES {{ order.total|intcomma }}</b>.<br>Enter your M-Pesa PIN to complete payment. This page updates by itself.</p>
+        </div>
+      {% else %}
+        <div class="big-state">
+          <div class="ic">{% include "_icon.html" with name="wallet" %}</div>
+          <h2>Payment pending</h2>
+          <p class="muted">{{ order.mpesa_message|default:"Your order is reserved. Complete payment with M-Pesa." }}</p>
+        </div>
+      {% endif %}
+      <div id="retry" {% if order.checkout_request_id %}style="display:none"{% endif %}>
+        <form method="post" action="{% url 'order_pay' order.number %}" class="row" style="justify-content:center">{% csrf_token %}
+          <input class="qty" style="width:180px" name="phone" value="{{ order.phone }}" aria-label="M-Pesa phone number">
+          <button class="btn">Send payment prompt again</button>
+        </form>
+      </div>
+      {% if demo_mode %}
+        <div class="infobox center" style="margin-top:14px">
+          <b>Demo mode:</b> M-Pesa keys aren't set yet, so no real prompt is sent.
+          <form method="post" action="{% url 'order_simulate' order.number %}" style="margin-top:8px">{% csrf_token %}<button class="btn sm">Simulate successful payment</button></form>
+        </div>
+      {% endif %}
+
+    {% elif order.status == "pending" and order.payment_method == "whatsapp" %}
+      <div class="big-state">
+        <div class="ic" style="background:#e8f6ef;color:var(--wa)">{% include "_icon.html" with name="wa" %}</div>
+        <h2>Almost done — send your order on WhatsApp</h2>
+        <p class="muted">Your items are reserved. Tap below to send the order to {{ shop.shop_name }}; we'll confirm and arrange payment.</p>
+        <a class="btn wa lg" id="waBtn" href="{{ wa_order_link }}" target="_blank" rel="noopener">{% include "_icon.html" with name="wa" %} Send order on WhatsApp</a>
+        <form method="post" action="{% url 'order_pay' order.number %}" style="margin-top:14px">{% csrf_token %}
+          <span class="small muted">Prefer to pay now?</span> <button class="btn sm light">Pay KES {{ order.total|intcomma }} with M-Pesa</button>
+        </form>
+      </div>
+
+    {% elif order.status == "cancelled" %}
+      <div class="big-state"><div class="ic">{% include "_icon.html" with name="x" %}</div><h2>Order cancelled</h2>
+        <p class="muted">Questions? <a href="{{ wa_link }}" target="_blank" rel="noopener">Chat with us on WhatsApp</a>.</p></div>
+    {% else %}
+      <div class="big-state">
+        <div class="ic" style="background:#e8f6ef;color:var(--ok)">{% include "_icon.html" with name="check" %}</div>
+        <h2>{% if order.status == "paid" %}Payment received — thank you!{% elif order.status == "dispatched" %}{% if order.delivery_method == "pickup" %}Ready for pickup{% else %}On the way{% endif %}{% else %}Order completed{% endif %}</h2>
+        <p class="muted">{% if order.delivery_method == "pickup" %}Pick up at <b>{{ shop.location }}</b>. Bring your order number <b>{{ order.number }}</b>.{% else %}We'll deliver to <b>{{ order.address }}</b> and call you on {{ order.phone }}.{% endif %}
+        {% if order.mpesa_receipt %}<br>M-Pesa receipt: <b>{{ order.mpesa_receipt }}</b>{% endif %}</p>
+      </div>
+    {% endif %}
+    </div>
+
+    <h2>Items</h2>
+    <div class="table-wrap"><table>
+      {% for it in items %}<tr><td>{{ it.quantity }} × {{ it.name }}</td><td style="text-align:right">KES {{ it.line_total|intcomma }}</td></tr>{% endfor %}
+      <tr><td class="muted">Delivery</td><td style="text-align:right">{% if order.delivery_fee %}KES {{ order.delivery_fee|intcomma }}{% else %}Free{% endif %}</td></tr>
+      <tr><td><b>Total</b></td><td style="text-align:right"><b>KES {{ order.total|intcomma }}</b></td></tr>
+    </table></div>
+  </div>
+
+  <div class="panel">
+    <div class="spread"><h2 style="margin:0">Order {{ order.number }}</h2><span class="status {{ order.status }}" id="statusPill">{{ order.get_status_display }}</span></div>
+    <p class="small muted">Placed {{ order.created|date:"j M Y, g:i a" }}</p>
+    <p><b>{{ order.full_name }}</b><br>{{ order.phone }}{% if order.email %}<br>{{ order.email }}{% endif %}</p>
+    <p>{{ order.get_delivery_method_display }}{% if order.address %}<br><span class="muted">{{ order.address }}</span>{% endif %}</p>
+    <p>{{ order.get_payment_method_display }}</p>
+    <p class="small muted">Save your order number <b>{{ order.number }}</b> — you can look it up any time on <a href="{% url 'track_order' %}">Track order</a>.</p>
+    <a class="btn ghost block" href="{% url 'shop' %}">Continue shopping</a>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+{% if order.status == "pending" and order.payment_method == "whatsapp" and is_new %}
+<script>setTimeout(function(){ window.location.href = document.getElementById('waBtn').href; }, 1200);</script>
+{% endif %}
+{% if order.status == "pending" and order.payment_method == "mpesa" and order.checkout_request_id %}
+<script>
+(function(){
+  var tries = 0;
+  function poll(){
+    fetch("{% url 'order_status' order.number %}", {credentials: 'same-origin'})
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (d.status !== 'pending') { window.location.reload(); return; }
+        if (d.failed) {
+          document.getElementById('waiting').innerHTML = '<h2>Payment not completed</h2><p class="muted">' +
+            (d.message || 'The prompt was cancelled or timed out.') + '</p>';
+          document.getElementById('retry').style.display = '';
+          return;
+        }
+        if (++tries < 36) setTimeout(poll, 5000);
+        else document.getElementById('retry').style.display = '';
+      }).catch(function(){ if (++tries < 36) setTimeout(poll, 5000); });
+  }
+  setTimeout(poll, 5000);
+})();
+</script>
+{% endif %}
+{% endblock %}

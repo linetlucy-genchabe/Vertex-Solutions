@@ -1,0 +1,28 @@
+{% extends "dashboard/base.html" %}
+{% block dtitle %}Categories{% endblock %}
+{% block content %}
+<div class="top"><h1>Categories</h1></div>
+<div class="two-col">
+  <div class="panel table-wrap" style="padding:8px 14px">
+    <table>
+      <thead><tr><th>Position</th><th>Name</th><th>Products</th><th></th></tr></thead>
+      <tbody>{% for c in categories %}
+        <tr class="{% if editing.pk == c.pk %}low-row{% endif %}"><td>{{ c.sort_order }}</td><td><b>{{ c.name }}</b></td><td>{{ c.n }}</td>
+          <td style="white-space:nowrap"><a class="btn sm ghost" href="{% url 'dash_category_edit' c.pk %}">Edit</a> <a class="btn sm ghost" href="{{ c.get_absolute_url }}" target="_blank">View</a></td></tr>
+      {% empty %}<tr><td colspan="4" class="muted">No categories yet — add one on the right.</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+  <div class="panel">
+    <h2>{% if editing %}Edit “{{ editing.name }}”{% else %}Add a category{% endif %}</h2>
+    <form method="post">{% csrf_token %}
+      {% for field in form %}{% include "_field.html" %}{% endfor %}
+      <button class="btn block">{% if editing %}Save changes{% else %}Add category{% endif %}</button>
+      {% if editing %}
+        <a class="btn ghost block" style="margin-top:8px" href="{% url 'dash_categories' %}">Cancel</a>
+        <button class="btn danger block" style="margin-top:8px" name="delete" value="1" formnovalidate onclick="return confirm('Delete this category? Its products stay, just without a category.')">Delete category</button>
+      {% endif %}
+    </form>
+    <p class="small muted">Categories appear in the blue menu bar and on the home page. Lower position numbers show first.</p>
+  </div>
+</div>
+{% endblock %}

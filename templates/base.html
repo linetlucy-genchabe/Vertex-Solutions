@@ -1,0 +1,89 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ shop.shop_name }} — Computers & Accessories{% endblock %}</title>
+  <meta name="description" content="{{ shop.shop_name }}: laptops, MacBooks, desktops and computer accessories. {{ shop.location }}. Pay with M-Pesa.">
+  <meta name="theme-color" content="#0a2342">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231d4ed8'/%3E%3Ctext x='16' y='23' font-size='19' font-family='Arial' font-weight='bold' fill='white' text-anchor='middle'%3EV%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+{% block page %}
+<div class="topbar">
+  <div class="wrap">
+    <span>{% include "_icon.html" with name="pin" %} {{ shop.location }}</span>
+    <span class="row" style="gap:16px">
+      <a href="tel:{{ shop.phone|cut:' ' }}">{% include "_icon.html" with name="phone" %} {{ shop.phone }}</a>
+      <a href="{% url 'track_order' %}" class="hide-sm">Track order</a>
+      {% if user.is_staff %}<a href="{% url 'dash_home' %}"><b>Owner dashboard →</b></a>{% endif %}
+    </span>
+  </div>
+</div>
+
+<header class="site">
+  <div class="wrap">
+    <a class="logo" href="{% url 'home' %}"><span class="mark">V</span><span>{{ shop.shop_name }}<small>Computers & accessories</small></span></a>
+    <form class="search" action="{% url 'shop' %}" method="get" role="search">
+      <input type="search" name="q" value="{{ q|default:'' }}" placeholder="Search laptops, MacBooks, chargers, mice…" aria-label="Search products">
+      <button type="submit" aria-label="Search">{% include "_icon.html" with name="search" %}</button>
+    </form>
+    <div class="head-links">
+      {% if user.is_authenticated %}
+        <a href="{% url 'account' %}">{% include "_icon.html" with name="user" %} <span class="hide-sm">{{ user.first_name|default:"Account" }}</span></a>
+      {% else %}
+        <a href="{% url 'login' %}">{% include "_icon.html" with name="user" %} <span class="hide-sm">Sign in</span></a>
+      {% endif %}
+      <a class="cart-link" href="{% url 'cart' %}">{% include "_icon.html" with name="cart" %} <span class="hide-sm">Cart</span> <span class="badge-count">{{ cart_count }}</span></a>
+    </div>
+  </div>
+</header>
+
+<nav class="cats" aria-label="Categories">
+  <div class="wrap">
+    <a href="{% url 'shop' %}" class="{% if request.resolver_match.url_name == 'shop' and not request.GET.offers %}on{% endif %}">All products</a>
+    {% for c in nav_categories %}<a href="{{ c.get_absolute_url }}" class="{% if category.pk == c.pk %}on{% endif %}">{{ c.name }}</a>{% endfor %}
+    <a href="{% url 'shop' %}?offers=1" class="{% if request.GET.offers %}on{% endif %}">🔥 Offers</a>
+  </div>
+</nav>
+
+{% if messages %}<div class="wrap msgs">{% for m in messages %}<div class="msg {{ m.tags }}">{{ m }}</div>{% endfor %}</div>{% endif %}
+
+<main class="wrap">{% block content %}{% endblock %}</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <a class="logo" href="{% url 'home' %}" style="color:#fff"><span class="mark">V</span>{{ shop.shop_name }}</a>
+        <p>{{ shop.tagline }}</p>
+        <p>{% include "_icon.html" with name="pin" %} {{ shop.location }}<br>
+           {% include "_icon.html" with name="phone" %} <a href="tel:{{ shop.phone|cut:' ' }}">{{ shop.phone }}</a>
+           {% if shop.email %}<br>✉ <a href="mailto:{{ shop.email }}">{{ shop.email }}</a>{% endif %}</p>
+      </div>
+      <div>
+        <h3>Shop</h3>
+        <ul>{% for c in nav_categories %}<li><a href="{{ c.get_absolute_url }}">{{ c.name }}</a></li>{% endfor %}</ul>
+      </div>
+      <div>
+        <h3>Help</h3>
+        <ul>
+          <li><a href="{% url 'track_order' %}">Track your order</a></li>
+          <li><a href="{{ wa_link }}" target="_blank" rel="noopener">Chat on WhatsApp</a></li>
+          <li><a href="{% url 'account' %}">My account</a></li>
+          <li>Pay with M-Pesa · Pickup or delivery</li>
+        </ul>
+      </div>
+    </div>
+    <div class="base spread"><span>© {% now "Y" %} {{ shop.shop_name }}. All rights reserved.</span><span>Genuine products · Warranty on all computers</span></div>
+  </div>
+</footer>
+
+<a class="wa-float" href="{{ wa_link }}" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp">{% include "_icon.html" with name="wa" %}</a>
+{% endblock %}
+{% block scripts %}{% endblock %}
+</body>
+</html>

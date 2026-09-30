@@ -1,0 +1,58 @@
+{% extends "base.html" %}{% load static %}
+{% block content %}
+<section class="hero">
+  <div class="txt">
+    <h1>Laptops, MacBooks & accessories — ready when you are.</h1>
+    <p>{{ shop.tagline }}. Order online, pay with M-Pesa, then pick up at {{ shop.location }} or get it delivered.</p>
+    <div class="row" style="margin-top:18px">
+      <a class="btn light lg" href="{% url 'shop' %}">Shop now</a>
+      <a class="btn lg" style="background:rgba(255,255,255,.15)" href="{% url 'shop' %}?offers=1">See offers</a>
+    </div>
+  </div>
+  <div class="img" style="background-image:url('https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=1200&q=70&auto=format&fit=crop')"></div>
+</section>
+
+<div class="perks">
+  <div class="perk"><div class="ic">{% include "_icon.html" with name="shield" %}</div><div><b>Genuine products</b><span>With warranty</span></div></div>
+  <div class="perk"><div class="ic">{% include "_icon.html" with name="wallet" %}</div><div><b>Pay with M-Pesa</b><span>Prompt on your phone</span></div></div>
+  <div class="perk"><div class="ic">{% include "_icon.html" with name="store" %}</div><div><b>Pick up in store</b><span>Dynamic Mall, SL26</span></div></div>
+  <div class="perk"><div class="ic">{% include "_icon.html" with name="truck" %}</div><div><b>Delivery available</b><span>Fast, to your door</span></div></div>
+</div>
+
+{% if categories %}
+<section class="block">
+  <div class="spread"><h2>Shop by category</h2><a href="{% url 'shop' %}">View all →</a></div>
+  <div class="cat-grid">
+    {% for c in categories %}
+    <a class="cat-tile" href="{{ c.get_absolute_url }}">
+      <img src="{{ c.image_url|default:'/static/placeholder.svg' }}" alt="" loading="lazy" onerror="this.style.display='none'">
+      <div><b>{{ c.name }}</b><span>{{ c.n }} item{{ c.n|pluralize }}</span></div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if offers %}
+<section class="block">
+  <div class="spread"><h2>🔥 Offers</h2><a href="{% url 'shop' %}?offers=1">All offers →</a></div>
+  <div class="grid">{% for p in offers %}{% include "shop/_card.html" %}{% endfor %}</div>
+</section>
+{% endif %}
+
+{% if featured %}
+<section class="block">
+  <div class="spread"><h2>Featured</h2></div>
+  <div class="grid">{% for p in featured %}{% include "shop/_card.html" %}{% endfor %}</div>
+</section>
+{% endif %}
+
+<section class="block">
+  <div class="spread"><h2>New arrivals</h2><a href="{% url 'shop' %}">See everything →</a></div>
+  {% if latest %}
+    <div class="grid">{% for p in latest %}{% include "shop/_card.html" %}{% endfor %}</div>
+  {% else %}
+    <div class="panel center muted">No products yet.{% if user.is_staff %} <a href="{% url 'dash_product_new' %}">Add your first product</a>.{% endif %}</div>
+  {% endif %}
+</section>
+{% endblock %}

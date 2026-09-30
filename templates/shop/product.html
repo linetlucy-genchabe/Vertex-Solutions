@@ -1,0 +1,50 @@
+{% extends "base.html" %}{% load static humanize %}
+{% block title %}{{ product.name }} — {{ shop.shop_name }}{% endblock %}
+{% block content %}
+<div class="crumbs"><a href="{% url 'home' %}">Home</a> /
+  {% if product.category %}<a href="{{ product.category.get_absolute_url }}">{{ product.category.name }}</a> / {% endif %}{{ product.name }}</div>
+
+<div class="pd">
+  <div class="ph"><img src="{{ product.photo|default:'/static/placeholder.svg' }}" alt="{{ product.name }}" onerror="this.onerror=null;this.src='{% static 'placeholder.svg' %}'"></div>
+  <div>
+    {% if product.brand %}<div class="brand" style="color:var(--blue);font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em">{{ product.brand }}</div>{% endif %}
+    <h1>{{ product.name }}</h1>
+    {% if product.short_specs %}<p class="muted" style="margin-top:0">{{ product.short_specs }}</p>{% endif %}
+    <div class="price">KES {{ product.price|intcomma }}
+      {% if product.on_offer %}<span class="old">KES {{ product.old_price|intcomma }}</span> <span class="status paid">Save {{ product.discount_percent }}%</span>{% endif %}
+    </div>
+    <p>
+      {% if not product.in_stock %}<span class="stock out">{% include "_icon.html" with name="x" %} Out of stock</span>
+      {% elif product.is_low_stock %}<span class="stock low">{% include "_icon.html" with name="alert" %} Only {{ product.stock }} left — order soon</span>
+      {% else %}<span class="stock ok">{% include "_icon.html" with name="check" %} In stock</span>{% endif %}
+    </p>
+
+    {% if product.in_stock %}
+    <form method="post" action="{% url 'cart_add' product.pk %}" class="row" style="margin:16px 0">{% csrf_token %}
+      <input class="qty" type="number" name="qty" value="1" min="1" max="{{ product.stock }}" aria-label="Quantity">
+      <button class="btn lg" name="add">{% include "_icon.html" with name="cart" %} Add to cart</button>
+      <button class="btn light lg" name="buy_now" value="1">Buy now</button>
+    </form>
+    {% endif %}
+    <a class="btn wa block" href="{{ ask_link }}" target="_blank" rel="noopener">{% include "_icon.html" with name="wa" %} Ask about this on WhatsApp</a>
+
+    <div class="infobox" style="margin-top:16px">
+      {% include "_icon.html" with name="store" %} Pick up at <b>{{ shop.location }}</b><br>
+      {% include "_icon.html" with name="truck" %} Delivery KES {{ shop.delivery_fee|intcomma }}{% if shop.free_delivery_over %} · free over KES {{ shop.free_delivery_over|intcomma }}{% endif %}<br>
+      {% include "_icon.html" with name="wallet" %} Pay with M-Pesa at checkout
+    </div>
+    {% if user.is_staff %}<p class="small"><a href="{% url 'dash_product_edit' product.pk %}">✎ Edit this product</a> · Stock: {{ product.stock }}</p>{% endif %}
+  </div>
+</div>
+
+{% if product.description %}
+<section class="panel" style="margin-top:20px"><h2>Details</h2><div class="desc">{{ product.description }}</div></section>
+{% endif %}
+
+{% if related %}
+<section class="block" style="margin-top:28px">
+  <h2>You may also like</h2>
+  <div class="grid">{% for p in related %}{% include "shop/_card.html" %}{% endfor %}</div>
+</section>
+{% endif %}
+{% endblock %}

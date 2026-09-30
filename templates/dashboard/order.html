@@ -1,0 +1,51 @@
+{% extends "dashboard/base.html" %}{% load humanize %}
+{% block dtitle %}Order {{ order.number }}{% endblock %}
+{% block content %}
+<div class="top">
+  <div><h1>Order {{ order.number }} <span class="status {{ order.status }}" style="vertical-align:middle">{{ order.get_status_display }}</span></h1>
+    <span class="muted">Placed {{ order.created|date:"l j M Y, g:i a" }}</span></div>
+  <a class="btn ghost" href="{% url 'dash_orders' %}">← All orders</a>
+</div>
+<div class="two-col">
+  <div class="panel table-wrap">
+    <h2>Items</h2>
+    <table>
+      <thead><tr><th>Product</th><th>Price</th><th>Qty</th><th style="text-align:right">Total</th></tr></thead>
+      <tbody>
+        {% for it in items %}<tr><td>{% if it.product %}<a href="{% url 'dash_product_edit' it.product.pk %}">{{ it.name }}</a>{% else %}{{ it.name }}{% endif %}</td>
+          <td>KES {{ it.price|intcomma }}</td><td>{{ it.quantity }}</td><td style="text-align:right">KES {{ it.line_total|intcomma }}</td></tr>{% endfor %}
+        <tr><td colspan="3" class="muted">Delivery</td><td style="text-align:right">KES {{ order.delivery_fee|intcomma }}</td></tr>
+        <tr><td colspan="3"><b>Total</b></td><td style="text-align:right"><b>KES {{ order.total|intcomma }}</b></td></tr>
+      </tbody>
+    </table>
+    <h2 style="margin-top:20px">Payment</h2>
+    <p>{{ order.get_payment_method_display }}{% if order.mpesa_receipt %} · Receipt <b>{{ order.mpesa_receipt }}</b>{% endif %}
+      {% if order.mpesa_message %}<br><span class="small muted">{{ order.mpesa_message }}</span>{% endif %}</p>
+    {% if order.notes %}<h2>Customer notes</h2><p class="desc">{{ order.notes }}</p>{% endif %}
+  </div>
+
+  <div>
+    <div class="panel">
+      <h2>Update status</h2>
+      {% if order.status == "cancelled" %}
+        <p class="muted">Cancelled — items were returned to stock.</p>
+      {% else %}
+      <form method="post">{% csrf_token %}
+        {% include "_field.html" with field=form.status %}
+        <button class="btn block">Save status</button>
+      </form>
+      <p class="small muted">Choosing <b>Cancelled</b> puts the items back into stock. For WhatsApp orders paid in the shop, set <b>Paid</b>.</p>
+      {% endif %}
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <h2>Customer</h2>
+      <p><b>{{ order.full_name }}</b><br>{{ order.phone }}{% if order.email %}<br>{{ order.email }}{% endif %}{% if order.user %}<br><span class="small muted">Has an account</span>{% endif %}</p>
+      <p>{{ order.get_delivery_method_display }}{% if order.address %}<br><span class="muted">{{ order.address }}</span>{% endif %}</p>
+      <div class="row">
+        <a class="btn wa sm" href="{{ wa_customer }}" target="_blank" rel="noopener">{% include "_icon.html" with name="wa" %} WhatsApp</a>
+        <a class="btn ghost sm" href="tel:{{ order.phone }}">{% include "_icon.html" with name="phone" %} Call</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
