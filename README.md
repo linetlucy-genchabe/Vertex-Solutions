@@ -20,7 +20,7 @@ A Django store for **Vertex Solutions**, Dynamic Mall, Shop SL26. Customers can 
 ```bash
 pip install -r requirements.txt
 python manage.py migrate
-OWNER_EMAIL=owner@example.com OWNER_PASSWORD=demo12345 python manage.py setup_shop --demo
+
 python manage.py runserver
 ```
 Then open http://127.0.0.1:8000. To use the dashboard, sign in at `/login/` with the owner email and go to `/dashboard/`.
